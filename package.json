@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-fish-speech-online",
   "description": "Character Voice Synthesis for Genshin Impact, Honkai: Star Rail, and Blue Archive",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -23,7 +23,8 @@
     "sr",
     "ba",
     "tts",
-    "fs"
+    "fs",
+    "vits"
   ],
   "repository": {
     "type": "git",
