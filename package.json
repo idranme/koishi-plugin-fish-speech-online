@@ -1,0 +1,50 @@
+{
+  "name": "koishi-plugin-fish-speech-online",
+  "description": "Character Voice Synthesis for Genshin Impact, Honkai: Star Rail, and Blue Archive",
+  "version": "0.0.2",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "chatbot",
+    "koishi",
+    "plugin",
+    "fish",
+    "speech",
+    "online",
+    "genshin",
+    "star",
+    "blue",
+    "gs",
+    "sr",
+    "ba",
+    "tts",
+    "fs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/idranme/koishi-plugin-fish-speech-online.git"
+  },
+  "peerDependencies": {
+    "koishi": "^4.16.6"
+  },
+  "dependencies": {
+    "@initencounter/vits": "^0.0.3"
+  },
+  "koishi": {
+    "browser": true,
+    "service": {
+      "implements": [
+        "vits"
+      ]
+    },
+    "description": {
+      "en": "Character Voice Synthesis for *Genshin Impact*, *Honkai: Star Rail*, and *Blue Archive*",
+      "zh": "《原神》《崩坏：星穹铁道》《蔚蓝档案》角色语音合成"
+    }
+  }
+}
