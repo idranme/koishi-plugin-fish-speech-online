@@ -1,4 +1,4 @@
-import { Context, h, Schema, Quester } from 'koishi'
+import { Context, h, Schema } from 'koishi'
 import Vits from '@initencounter/vits'
 import { Speakers } from './list'
 
@@ -6,6 +6,7 @@ class Main extends Vits {
   static inject = {
     required: ['http']
   }
+
   constructor(ctx: Context, public config: Main.Config) {
     super(ctx)
     ctx.command('fs-tts <content:text>', '语音生成', { checkArgCount: true, checkUnknown: true })
@@ -18,96 +19,95 @@ class Main extends Vits {
       .option('temperature', '[value:number]', { fallback: config.temperature })
       .action(async ({ options }, input) => {
         if (/<.*\/>/gm.test(input)) return '输入的内容不是纯文本。'
-        return await invoke(ctx.http, options as Required<typeof options>, input)
+        return await this.#invoke(options as Required<typeof options>, input)
       })
   }
+
   say(options: Vits.Result): Promise<h> {
     const speaker = typeof options.speaker_id === 'number'
       ? Speakers[options.speaker_id]
       : this.config.speaker
-    return invoke(this.ctx.http, { ...this.config, speaker }, options.input)
+    return this.#invoke({ ...this.config, speaker }, options.input)
   }
-}
 
-function invoke(
-  http: Quester,
-  config: Main.Config,
-  input: string,
-): Promise<h> {
-  return new Promise((resolve, reject) => {
-    const hash = Math.random().toString(36).substring(2)
-    const api = 'wss://fs.firefly.matce.cn/queue/join'
-    // What can I say
-    const ws = http.ws(api)
-    ws.addEventListener('message', e => {
-      const parsed = JSON.parse(e.data)
-      if (parsed.msg === 'send_hash') {
-        ws.send(JSON.stringify({ fn_index: 1, session_hash: hash }))
-      } else if (parsed.msg === 'send_data') {
-        ws.send(JSON.stringify({
-          data: [config.speaker],
-          event_data: null,
-          fn_index: 1,
-          session_hash: hash
-        }))
-      } else if (parsed.msg === 'process_completed') {
-        const refName = parsed.output.data[0]
-        const refText = parsed.output.data[1]
-        const ws = http.ws(api)
-        ws.addEventListener('message', e => {
-          const parsed = JSON.parse(e.data)
-          if (parsed.msg === 'send_hash') {
-            ws.send(JSON.stringify({ fn_index: 2, session_hash: hash }))
-          } else if (parsed.msg === 'send_data') {
-            ws.send(JSON.stringify({
-              data: [refName],
-              event_data: null,
-              fn_index: 2,
-              session_hash: hash
-            }))
-          } else if (parsed.msg === 'process_completed') {
-            const ref = parsed.output.data[0]
-            const ws = http.ws(api)
-            ws.addEventListener('message', e => {
-              const parsed = JSON.parse(e.data)
-              if (parsed.msg === 'send_hash') {
-                ws.send(JSON.stringify({ fn_index: 3, session_hash: hash }))
-              } else if (parsed.msg === 'send_data') {
-                const { speaker, chunk_length, max_new_tokens, top_p, repetition_penalty, temperature } = config
-                ws.send(JSON.stringify({
-                  data: [
-                    input,
-                    true,
-                    {
-                      ...ref,
-                      data: `https://fs.firefly.matce.cn/file=${ref.name}`
-                    },
-                    refText,
-                    max_new_tokens,
-                    chunk_length,
-                    top_p,
-                    repetition_penalty,
-                    temperature,
-                    speaker
-                  ],
-                  event_data: null,
-                  fn_index: 3,
-                  session_hash: hash
-                }))
-              } else if (parsed.msg === 'process_completed') {
-                const { data, duration } = parsed.output
-                const url = `https://fs.firefly.matce.cn/file=${data[0].name}`
-                resolve(h.audio(url, { type: 'voice', duration }))
-              }
-            })
-            ws.addEventListener('error', err => reject(err))
-          }
-        })
-        ws.addEventListener('error', err => reject(err))
-      }
+  #invoke(config: Main.Config, input: string): Promise<h> {
+    return new Promise((resolve, reject) => {
+      const hash = Math.random().toString(36).substring(2)
+      const api = 'wss://fs.firefly.matce.cn/queue/join'
+      // What can I say
+      const ws = this.ctx.http.ws(api)
+      ws.addEventListener('message', e => {
+        const parsed = JSON.parse(e.data)
+        if (parsed.msg === 'send_hash') {
+          ws.send(JSON.stringify({ fn_index: 1, session_hash: hash }))
+        } else if (parsed.msg === 'send_data') {
+          ws.send(JSON.stringify({
+            data: [config.speaker],
+            event_data: null,
+            fn_index: 1,
+            session_hash: hash
+          }))
+        } else if (parsed.msg === 'process_completed') {
+          if (!parsed.success) return resolve(h.text('选择角色错误。'))
+          const refName = parsed.output.data[0]
+          const refText = parsed.output.data[1]
+          const ws = this.ctx.http.ws(api)
+          ws.addEventListener('message', e => {
+            const parsed = JSON.parse(e.data)
+            if (parsed.msg === 'send_hash') {
+              ws.send(JSON.stringify({ fn_index: 2, session_hash: hash }))
+            } else if (parsed.msg === 'send_data') {
+              ws.send(JSON.stringify({
+                data: [refName],
+                event_data: null,
+                fn_index: 2,
+                session_hash: hash
+              }))
+            } else if (parsed.msg === 'process_completed') {
+              const ref = parsed.output.data[0]
+              const ws = this.ctx.http.ws(api)
+              ws.addEventListener('message', e => {
+                const parsed = JSON.parse(e.data)
+                if (parsed.msg === 'send_hash') {
+                  ws.send(JSON.stringify({ fn_index: 4, session_hash: hash }))
+                } else if (parsed.msg === 'send_data') {
+                  const { speaker, chunk_length, max_new_tokens, top_p, repetition_penalty, temperature } = config
+                  ws.send(JSON.stringify({
+                    data: [
+                      input,
+                      true,
+                      {
+                        ...ref,
+                        data: `https://fs.firefly.matce.cn/file=${ref.name}`
+                      },
+                      refText,
+                      max_new_tokens,
+                      chunk_length,
+                      top_p,
+                      repetition_penalty,
+                      temperature,
+                      speaker
+                    ],
+                    event_data: null,
+                    fn_index: 4,
+                    session_hash: hash
+                  }))
+                } else if (parsed.msg === 'process_completed') {
+                  if (!parsed.success) return resolve(h.text('语音生成失败。'))
+                  const { data, duration } = parsed.output
+                  const url = `https://fs.firefly.matce.cn/file=${data[0].name}`
+                  resolve(h.audio(url, { type: 'voice', duration }))
+                }
+              })
+              ws.addEventListener('error', err => reject(err))
+            }
+          })
+          ws.addEventListener('error', err => reject(err))
+        }
+      })
+      ws.addEventListener('error', err => reject(err))
     })
-    ws.addEventListener('error', err => reject(err))
-  })
+  }
 }
 
 namespace Main {
