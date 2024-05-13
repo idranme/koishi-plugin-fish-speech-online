@@ -23,11 +23,11 @@ class Main extends Vits {
       })
   }
 
-  say(options: Vits.Result): Promise<h> {
+  async say(options: Vits.Result): Promise<h> {
     const speaker = typeof options.speaker_id === 'number'
       ? Speakers[options.speaker_id]
       : this.config.speaker
-    return this.#invoke({ ...this.config, speaker }, options.input)
+    return await this.#invoke({ ...this.config, speaker }, options.input)
   }
 
   #invoke(config: Main.Config, input: string): Promise<h> {
