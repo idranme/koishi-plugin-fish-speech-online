@@ -124,10 +124,10 @@ namespace Main {
   // https://github.com/fishaudio/fish-speech/blob/46594de3bf436ee2b8f45d60222675edc60a4fb6/fish_speech/i18n/locale/zh_CN.json
   export const Config: Schema<Config> = Schema.object({
     speaker: Schema.union(Speakers).default('三月七_ZH').description('说话人'),
-    chunk_length: Schema.number().min(0).max(512).step(8).role('slider').default(48).description(
+    chunk_length: Schema.number().min(0).max(512).step(8).role('slider').default(90).description(
       '迭代提示长度，0 表示关闭',
     ),
-    max_new_tokens: Schema.number().min(0).max(2048).step(8).role('slider').default(0).description(
+    max_new_tokens: Schema.number().min(0).max(4096).step(8).role('slider').default(0).description(
       '每批最大令牌数，0 表示无限制',
     ),
     top_p: Schema.number().min(0).max(1).step(0.01).role('slider').default(0.7).description(
