@@ -1,4 +1,4 @@
-import { Context, h, Schema, Service, Dict } from 'koishi'
+import { Context, h, Schema, Service, Dict, noop } from 'koishi'
 import type Vits from '@initencounter/vits'
 import { Speakers } from './list'
 
@@ -56,6 +56,7 @@ function request(ctx: Context, session_hash: string, fn_index: number, data: any
         reject(`code ${e.code}`)
       }
     })
+    socket.addEventListener('error', noop)
   })
 }
 
