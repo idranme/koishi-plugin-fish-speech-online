@@ -9,7 +9,7 @@ class Main extends Service implements Vits {
 
   constructor(ctx: Context, public config: Main.Config) {
     super(ctx, 'vits', true)
-    ctx.command('fs-tts <content:text>', '语音生成', { checkArgCount: true, checkUnknown: true })
+    ctx.command('fs-tts <content:text>', '语音生成', { checkUnknown: true })
       .alias('say')
       .option('speaker', '--spkr [value:string]', { fallback: config.speaker })
       .option('chunk_length', '[value:number]', { fallback: config.chunk_length })
@@ -18,6 +18,7 @@ class Main extends Service implements Vits {
       .option('repetition_penalty', '[value:number]', { fallback: config.repetition_penalty })
       .option('temperature', '[value:number]', { fallback: config.temperature })
       .action(async ({ options }, input) => {
+        if (!input) return '内容未输入。'
         if (/<.*\/>/gm.test(input)) return '输入的内容不是纯文本。'
         return await generate(ctx, { ...this.config, ...options }, input)
       })
@@ -133,7 +134,7 @@ namespace Main {
       )
     }).description('参数设置'),
     Schema.object({
-      maxRetryCount: Schema.natural().default(2).description('语音生成失败时最大的重试次数。')
+      maxRetryCount: Schema.natural().default(3).description('语音生成失败时最大的重试次数。')
     }).description('高级设置'),
   ])
 }
